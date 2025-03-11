@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "sivalokeshyadav/jenkins-demo:latest"
+        KUBE_CONFIG_PATH = "/home/jenkins/.kube/config"
     }
 
     stages {
@@ -18,12 +19,6 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
-            steps {
-                sh 'docker run --rm $DOCKER_IMAGE npm test'
-            }
-        }
-
         stage('Push to Docker Hub') {
             steps {
                 withDockerRegistry([credentialsId: 'docker-hub-credentials', url: '']) {
@@ -32,9 +27,10 @@ pipeline {
             }
         }
 
-        stage('Deploy Container') {
+        stage('Deploy to Kubernetes') {
             steps {
-                sh 'docker run -d -p 3000:3000 --name jenkins-app $DOCKER_IMAGE'
+                sh 'kubectl apply -f k8s/deployment.yaml'
+                sh 'kubectl apply -f k8s/service.yaml'
             }
         }
     }
